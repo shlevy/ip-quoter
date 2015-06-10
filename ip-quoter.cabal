@@ -1,0 +1,19 @@
+name:                ip-quoter
+version:             1.0.0.0
+synopsis:            Quasiquoter for IP addresses
+description:
+  A quasiquoter for IP address literals – That is, IPv4 decimal-dotted or IPv6
+  colon-separated notation.
+homepage:            https://github.com/shlevy/ip-quoter
+license:             MIT
+license-file:        LICENSE
+author:              Shea Levy
+maintainer:          shea@shealevy.com
+copyright:           (c) 2015 Shea Levy
+category:            Network
+build-type:          Simple
+cabal-version:       >=1.10
+
+library
+  build-depends:       base >=4.8 && <5
+  default-language:    Haskell2010
