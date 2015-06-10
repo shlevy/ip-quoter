@@ -8,6 +8,7 @@ import Network.Socket ( HostAddress )
 import Language.Haskell.TH.Quote ( QuasiQuoter( .. ) )
 import Language.Haskell.TH.Syntax ( Q, Exp( .. ), Lit( .. ), Type ( .. ) )
 
+-- | QuasiQuoter for ip addresses (e.g. '[ip|127.0.0.1|]')
 ip :: QuasiQuoter
 ip = QuasiQuoter
   { quotePat = \_ -> fail "Can't invoke the ip quasiquoter in a pattern context"
