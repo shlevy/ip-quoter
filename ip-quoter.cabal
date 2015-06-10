@@ -16,7 +16,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:   Network.IP.Quoter
-  build-depends:     base >=4.8 && <5, template-haskell
+  build-depends:     base >=4.8 && <5, template-haskell, split, network
   default-language:  Haskell2010
 
 test-suite test
