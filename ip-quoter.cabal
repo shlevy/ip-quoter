@@ -4,6 +4,8 @@ synopsis:            Quasiquoter for IP addresses
 description:
   A quasiquoter for IP address literals – That is, IPv4 decimal-dotted or IPv6
   colon-separated notation.
+
+  Currently only IPv4 addresses are implemented.
 homepage:            https://github.com/shlevy/ip-quoter
 license:             MIT
 license-file:        LICENSE
