@@ -1,12 +1,24 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE LambdaCase #-}
 module Network.IP.Quoter (ip) where
 
-import Data.Char ( isDigit )
-import Data.Bits ( (.|.), unsafeShiftL )
-import Data.List.Split ( splitOn )
-import Network.Socket ( HostAddress )
+import Network.Socket ( HostAddress
+                      , HostAddress6
+                      , SockAddr( .. )
+                      , getAddrInfo
+                      , AddrInfo ( addrAddress, addrFlags )
+                      , AddrInfoFlag ( AI_NUMERICHOST )
+                      , defaultHints
+                      )
 import Language.Haskell.TH.Quote ( QuasiQuoter( .. ) )
-import Language.Haskell.TH.Syntax ( Q, Exp( .. ), Lit( .. ), Type ( .. ) )
+import Language.Haskell.TH.Syntax ( Q
+                                  , Exp( .. )
+                                  , Lit( .. )
+                                  , Type ( .. )
+                                  , runIO
+                                  )
+import Data.Word ( Word32 )
+import System.Endian ( fromBE32, toBE32 )
 
 -- | QuasiQuoter for ip addresses (e.g. '[ip|127.0.0.1|]')
 ip :: QuasiQuoter
@@ -18,32 +30,31 @@ ip = QuasiQuoter
   , quoteExp = parseIP
   }
 
-parseDigit :: Char -> Q Integer
-parseDigit c
-  | isDigit c = return . fromIntegral $ (fromEnum c - fromEnum '0')
-  | otherwise = fail "Non-digit in IP address"
-
-parseSegment' :: String -> Integer -> Q Integer
-parseSegment' [] total = return total
-parseSegment' (digit : rest) total
-  | total <= 25 = do
-      next <- parseDigit digit
-      if (total == 0) && (next == 0) && (not (null rest))
-        then fail "Leading zero in IP address segment"
-        else parseSegment' rest (total * 10 + next)
-  | otherwise = fail "IP address segment too big"
-
-parseSegment :: String -> Q Integer
-parseSegment [] = fail "Empty IP address segment"
-parseSegment str = parseSegment' str 0
+getIPInfo :: String -> IO SockAddr
+getIPInfo s = do
+    best:_ <- getAddrInfo hint hostname Nothing
+    return $ addrAddress best
+  where
+    hint = Just $ defaultHints { addrFlags = [ AI_NUMERICHOST ] }
+    hostname = Just s
 
 parseIP :: String -> Q Exp
-parseIP s = case (splitOn "." s) of
-  l@[ first, second, third, fourth ] -> do
-      bytes <- mapM (fmap (LitE . IntegerL) . parseSegment) l
-      return $ SigE (foldl1 shiftAndOr bytes) (ConT ''HostAddress)
+parseIP s = (runIO $ getIPInfo s) >>= \case
+  SockAddrInet _ addr ->
+      return . SigE networkExp $ ConT ''HostAddress
     where
-      shiftAndOr acc exp = AppE (AppE (VarE '(.|.)) shifted) exp
-        where
-          shifted = AppE (AppE (VarE 'unsafeShiftL) acc) (LitE $ IntegerL 8)
-  _ -> fail "IP address doesn't contain four segments"
+      hostW32 = fromBE32 addr
+      w32Lit = LitE . IntegerL $ fromIntegral hostW32
+      toBE32Var = VarE 'toBE32
+      networkExp = AppE toBE32Var w32Lit
+
+  SockAddrInet6 _ _ ( addr1, addr2, addr3, addr4 ) _ ->
+      return . SigE tup $ ConT ''HostAddress6
+    where
+      tup = TupE $ map (LitE . IntegerL . fromIntegral) [ addr1
+                                                        , addr2
+                                                        , addr3
+                                                        , addr4
+                                                        ]
+
+  x -> fail ("Invalid address " ++ (show x) ++ " when parsing " ++ s)

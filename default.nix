@@ -1,12 +1,12 @@
-{ mkDerivation, base, network, split, stdenv, tasty, tasty-hunit
+{ mkDerivation, base, cpu, network, stdenv, tasty, tasty-hunit
 , template-haskell
 }:
 mkDerivation {
   pname = "ip-quoter";
-  version = "1.0.0.0";
+  version = "1.0.1.0";
   src = ./.;
-  buildDepends = [ base network split template-haskell ];
-  testDepends = [ base network tasty tasty-hunit ];
+  buildDepends = [ base cpu network template-haskell ];
+  testDepends = [ base cpu network tasty tasty-hunit ];
   homepage = "https://github.com/shlevy/ip-quoter";
   description = "Quasiquoter for IP addresses";
   license = stdenv.lib.licenses.mit;
