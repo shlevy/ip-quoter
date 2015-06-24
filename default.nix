@@ -3,7 +3,7 @@
 }:
 mkDerivation {
   pname = "ip-quoter";
-  version = "1.0.1.0";
+  version = "1.0.1.1";
   src = ./.;
   buildDepends = [ base cpu network template-haskell ];
   testDepends = [ base cpu network tasty tasty-hunit ];
